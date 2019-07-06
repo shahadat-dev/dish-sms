@@ -1,30 +1,49 @@
 const express = require('express')
+const cors = require('cors')
+const mongoose = require('mongoose')
+const bodyParser = require('body-parser')
+var Fawn = require('fawn')
+var compression = require('compression')
+
 const app = express()
-const uuid4 = require('uuid4')
-const port = 64235
+
+// Routes
+const sms = require('./routes/api/sms')
+
+// compress all responses
+app.use(compression())
+
+// Body parser middleware
+app.use(
+  bodyParser.urlencoded({
+    extended: false
+  })
+)
+app.use(bodyParser.json())
+
+// Cors
+app.use(cors())
+
+//DB config
+const db = require('./config/keys').mongoURI
+
+// Connect to MongoDB
+mongoose
+  .connect(db,  { useNewUrlParser: true })
+  .then(() => console.log('MongoDB connected.'))
+  .catch(err => console.log(err))
+
+// Initialize Fawn
+Fawn.init(mongoose)
+
+// Use Routes
+app.use('/api/sms', sms)
 
 
-let counter = 0
+const port = process.env.PORT || 64235
 
-app.get('/api/sms/', (req, res) => {
 
-  const DT = new Date()
-  console.log(DT,req.originalUrl)
+app.listen(port, () => console.log(`Server is running on port ${port}`))
 
-  const id = uuid4()
-  const mobile = '01717541865'
-  const body = 'This is sms number ' + counter++
 
-  console.log(`${id} ${mobile} ${body}`)
 
-  const data = {
-    id,
-    mobile,
-    body
-  }
-  
-  res.json(data)
-
-})
-
-app.listen(port, () => console.log(`Example app listening on port ${port}!`))
