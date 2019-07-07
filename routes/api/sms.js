@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const Fawn = require('fawn')
+const mongoose = require('mongoose')
 
 // Load model
 const Sms = require('../../models/Sms')
@@ -25,7 +26,7 @@ router.get(
   '/',
   (req, res) => {
     const DT = new Date()
-    console.log(DT, req.originalUrl, req.query)
+    console.log(DT, req.method, req.originalUrl, req.query)
 
     if(!req.query.apiKey || req.query.apiKey !== apiKey) {
       return res.status(500).json({err: 'Access Forbidden!'})
@@ -46,30 +47,36 @@ router.get(
   }
 )
 
-// @route   POST /api/sms
+// @route   POST /api/sms/update?apiKey=value&id=value&status=0&local=1
 // @desc    Update sms status and local 
 // @access  Private
 router.post(
-  '/',
+  '/update',
   (req, res) => {
     const DT = new Date()
-    console.log(DT, req.originalUrl, req.query, req.body)    
+    console.log(DT, req.method, req.originalUrl, req.query)    
 
     if(!req.query.apiKey || req.query.apiKey !== apiKey) {
       return res.status(500).json({err: 'Access Forbidden!'})
     }
 
-    if(!req.body.id) {
+    if(!req.query.id) {
       return res.status(400).json({err: 'No id exists!'})  
-    } 
+    }
+
+    if(!mongoose.Types.ObjectId.isValid(req.query.id)) {
+      return res.status(400).json({err: 'Invalid ID!'})  
+    }
     
-    if(req.body.status < 0 || req.body.status >= 3) {
+    if(req.query.status < 0 || req.query.status >= 3) {
       return res.status(400).json({err: 'Bad data!'})   
     }
 
-    if(req.body.local < 0 || req.body.local >= 3) {
+    if(req.query.local < 0 || req.query.local >= 3) {
       return res.status(400).json({err: 'Bad data!'})   
-    }
+    }    
+
+    // return res.json({msg: 'done'})
 
     // Sms.findOneAndUpdate({_id: req.body.id}, {status: req.body.status, local: req.body.local}, (error, doc) => {
     //   if(error) {
@@ -79,12 +86,12 @@ router.post(
     //   return res.json(doc)
     // });
 
-    Sms.findById(req.body.id)
+    Sms.findById(req.query.id)
       .then(sms => {
-        if(!sms) return res.status(404).json({err: 'Doc not found!'})
+        if(!sms) return res.status(404).json({err: 'Document not found!'})
 
-        sms.status = req.body.status || sms.status
-        sms.local = req.body.local || sms.local
+        sms.status = req.query.status || sms.status
+        sms.local = req.query.local || sms.local
 
         sms.save().then(s => {
           return res.json({status: true, msg: 'success'})
