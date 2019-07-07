@@ -35,7 +35,7 @@ router.get(
     // Feeder.find({ controllerID: req.user.id })
     Sms.find()
       .select('_id mobile message status local')
-      .where({status: 0})
+      .where({status: 0, local: 0})
       .then(items => {
         if (!items) {
           return res.status(404).json({ status: false, msg: 'There are no sms' })
@@ -68,23 +68,13 @@ router.post(
       return res.status(400).json({err: 'Invalid ID!'})  
     }
     
-    if(req.query.status < 0 || req.query.status >= 3) {
+    if(req.query.status < 0 || req.query.status > 1) {
       return res.status(400).json({err: 'Bad data!'})   
     }
 
-    if(req.query.local < 0 || req.query.local >= 3) {
+    if(req.query.local < 0 || req.query.local > 1) {
       return res.status(400).json({err: 'Bad data!'})   
-    }    
-
-    // return res.json({msg: 'done'})
-
-    // Sms.findOneAndUpdate({_id: req.body.id}, {status: req.body.status, local: req.body.local}, (error, doc) => {
-    //   if(error) {
-    //     console.log(error)
-    //   }
-    //   console.log(doc)
-    //   return res.json(doc)
-    // });
+    } 
 
     Sms.findById(req.query.id)
       .then(sms => {
