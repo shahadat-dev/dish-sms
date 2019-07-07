@@ -60,7 +60,7 @@ router.get(
 // @route   POST /api/sms/update?apiKey=value&id=value&status=0&local=1
 // @desc    Update sms status and local 
 // @access  Private
-router.post(
+router.get(
   '/update',
   (req, res) => {
     const DT = new Date()
