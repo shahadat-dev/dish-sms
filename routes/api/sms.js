@@ -32,16 +32,26 @@ router.get(
       return res.status(500).json({err: 'Access Forbidden!'})
     }
 
+    let messages = []    
+
     // Feeder.find({ controllerID: req.user.id })
     Sms.find()
       .select('_id mobile message status local')
       .where({status: 0, local: 0})
-      .then(items => {
-        if (!items) {
+      .then(docs => {
+        if (!docs) {
           return res.status(404).json({ status: false, msg: 'There are no sms' })
         }
-        console.log(items.length)
-        res.json(items)
+        messages = docs.map(doc => {
+          let obj = doc.toObject()
+          obj.id = obj._id
+          delete obj._id
+
+          // console.log(obj)
+          return obj
+        })
+        console.log(messages.length)
+        res.json({messages})
       })
       .catch(err => res.json({ status: false, data: err }))
   }
