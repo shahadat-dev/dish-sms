@@ -51,7 +51,7 @@ router.get(
           return obj
         })
         console.log(messages.length)
-        res.json({messages})
+        res.json(messages)
       })
       .catch(err => res.json({ status: false, data: err }))
   }
