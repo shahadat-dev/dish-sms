@@ -79,11 +79,11 @@ router.get(
       return res.status(400).json({err: 'Invalid ID!'})  
     }
     
-    if(req.query.status < 0 || req.query.status > 1) {
+    if(req.query.status < 0 || req.query.status > 3) {
       return res.status(400).json({err: 'Bad data!'})   
     }
 
-    if(req.query.local < 0 || req.query.local > 1) {
+    if(req.query.local < 0 || req.query.local > 3) {
       return res.status(400).json({err: 'Bad data!'})   
     } 
 
