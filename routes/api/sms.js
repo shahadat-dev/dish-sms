@@ -38,6 +38,7 @@ router.get(
     Sms.find()
       .select('_id mobile message status local')
       .where({status: 0, local: 0})
+      .limit(20)
       .then(docs => {
         if (!docs) {
           return res.status(404).json({ status: false, msg: 'There are no sms' })
@@ -97,6 +98,41 @@ router.get(
           return res.json({status: true, msg: 'success'})
         }).catch(err => console.log(err))
       })
+  }
+)
+
+
+// @route   GET /api/sms/reset
+// @desc    reset sms local to 0 if status is 0
+// @access  Private
+router.get(
+  '/reset',
+  (req, res) => {
+    const DT = new Date()
+    console.log(DT, req.method, req.originalUrl, req.query)
+
+    if(!req.query.apiKey || req.query.apiKey !== 'IwiBGoWbhE5MATIepbzPkCyz6Hi9MOY') {
+      return res.status(500).json({err: 'Access Forbidden!'})
+    }      
+
+    
+    // Sms.find()
+    //   .select('_id mobile message status local')
+    //   .where({status: 0, local: 0})
+    //   .then(docs => {
+    //     if (!docs) {
+    //       return res.status(404).json({ status: false, msg: 'There are no sms' })
+    //     }        
+    //     res.json(messages)
+    //   })
+    //   .catch(err => res.json({ status: false, data: err }))
+
+      Sms.updateMany({status: 0, local: 1}, {"$set":{local: 0}})
+        .then(docs => {
+          console.log(docs.length)
+          res.json(docs)
+        })
+        .catch(err => console.log(err))
   }
 )
 
