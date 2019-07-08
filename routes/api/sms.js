@@ -9,6 +9,8 @@ const Sms = require('../../models/Sms')
 const apiKey = require('../../config/keys').apiKey
 const apiKey2 = require('../../config/keys').apiKey2
 
+let counter = 0
+
 // @route   GET /api/sms/test
 // @desc    Test controllers route
 // @access  Public
@@ -27,7 +29,15 @@ router.get(
   '/',
   (req, res) => {
     const DT = new Date()
-    console.log(DT, ' read')
+    
+    console.log(DT, ' read', counter++)
+    if(counter < 25) {
+      return res.status(500).json({err: 'Access Forbidden! '})
+    } 
+    counter = 0
+    // console.log('reset counter', counter)
+    // return res.status(500).json({err: 'Reset counter! ' + counter})
+
 
     if(!req.query.apiKey || req.query.apiKey !== apiKey) {
       return res.status(500).json({err: 'Access Forbidden!'})
