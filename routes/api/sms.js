@@ -7,6 +7,7 @@ const mongoose = require('mongoose')
 const Sms = require('../../models/Sms')
 
 const apiKey = require('../../config/keys').apiKey
+const apiKey2 = require('../../config/keys').apiKey2
 
 // @route   GET /api/sms/test
 // @desc    Test controllers route
@@ -20,13 +21,13 @@ router.get(
 )
 
 // @route   GET /api/sms
-// @desc    Get all sms which status is 0
+// @desc    Get all sms which status:0 & local:0
 // @access  Private
 router.get(
   '/',
   (req, res) => {
     const DT = new Date()
-    console.log(DT, req.method, req.originalUrl, req.query)
+    console.log(DT, ' read')
 
     if(!req.query.apiKey || req.query.apiKey !== apiKey) {
       return res.status(500).json({err: 'Access Forbidden!'})
@@ -34,15 +35,12 @@ router.get(
 
     let messages = []    
 
-    // Feeder.find({ controllerID: req.user.id })
     Sms.find()
       .select('_id mobile message status local')
-      .where({status: 0, local: 0})
+      .where({status: 0, local: 0, smsType: { $ne: 'ALERT_MULTIPLE' }})
       .limit(20)
-      .then(docs => {
-        if (!docs) {
-          return res.status(404).json({ status: false, msg: 'There are no sms' })
-        }
+      .then(docs => {        
+        console.log('market: ', docs.length)
         messages = docs.map(doc => {
           let obj = doc.toObject()
           obj.id = obj._id
@@ -50,9 +48,33 @@ router.get(
 
           // console.log(obj)
           return obj
-        })
-        console.log(messages.length)
-        res.json(messages)
+        })        
+
+        if(docs.length < 20) {
+          Sms.find()
+            .select('_id mobile message status local')
+            .where({status: 0, local: 0})
+            .limit(20-docs.length)
+            .then(docs2 => {  
+
+              console.log('bulk: ', docs2.length)
+              let messages2 = []
+              messages2 = docs2.map(doc => {
+                let obj = doc.toObject()
+                obj.id = obj._id
+                delete obj._id
+
+                // console.log(obj)
+                return obj
+              })
+              console.log('total: ', messages.concat(messages2).length)
+
+              return res.json(messages.concat(messages2))
+            })
+        } else {          
+          res.json(messages)
+        }
+
       })
       .catch(err => res.json({ status: false, data: err }))
   }
@@ -65,7 +87,7 @@ router.get(
   '/update',
   (req, res) => {
     const DT = new Date()
-    console.log(DT, req.method, req.originalUrl, req.query)    
+    console.log('update: ', DT, req.query)    
 
     if(!req.query.apiKey || req.query.apiKey !== apiKey) {
       return res.status(500).json({err: 'Access Forbidden!'})
@@ -111,28 +133,72 @@ router.get(
     const DT = new Date()
     console.log(DT, req.method, req.originalUrl, req.query)
 
-    if(!req.query.apiKey || req.query.apiKey !== 'IwiBGoWbhE5MATIepbzPkCyz6Hi9MOY') {
+    if(!req.query.apiKey || req.query.apiKey !== apiKey2) {
       return res.status(500).json({err: 'Access Forbidden!'})
-    }      
+    }
 
-    
-    // Sms.find()
-    //   .select('_id mobile message status local')
-    //   .where({status: 0, local: 0})
-    //   .then(docs => {
-    //     if (!docs) {
-    //       return res.status(404).json({ status: false, msg: 'There are no sms' })
-    //     }        
-    //     res.json(messages)
-    //   })
-    //   .catch(err => res.json({ status: false, data: err }))
+    Sms.updateMany({status: 0, local: 1}, {"$set":{local: 0}})
+      .then(docs => {
+        console.log(docs.length)
+        res.json(docs)
+      })
+      .catch(err => console.log(err))
+  }
+)
 
-      Sms.updateMany({status: 0, local: 1}, {"$set":{local: 0}})
-        .then(docs => {
-          console.log(docs.length)
-          res.json(docs)
-        })
-        .catch(err => console.log(err))
+// @route   GET /api/sms/sent
+// @desc    Get all sent sms (which status and local both is 1)
+// @access  Private
+router.get(
+  '/sent',
+  (req, res) => {
+    const DT = new Date()
+    console.log(DT, req.method, req.originalUrl, req.query)
+
+    if(!req.query.apiKey || req.query.apiKey !== apiKey2) {
+      return res.status(500).json({err: 'Access Forbidden!'})
+    }    
+
+    Sms.find()
+      .select('_id mobile message status local')
+      .where({status: 1, local: 1})
+      .then(docs => {
+        if (!docs) {
+          return res.status(404).json({ status: false, msg: 'There are no sms' })
+        }
+       
+        console.log(docs.length)
+        res.json({count: docs.length, docs})
+      })
+      .catch(err => res.json({ status: false, data: err }))
+  }
+)
+
+// @route   GET /api/sms/read
+// @desc    Get all read sms (which status=0 and local=1)
+// @access  Private
+router.get(
+  '/read',
+  (req, res) => {
+    const DT = new Date()
+    console.log(DT, req.method, req.originalUrl, req.query)
+
+    if(!req.query.apiKey || req.query.apiKey !== apiKey2) {
+      return res.status(500).json({err: 'Access Forbidden!'})
+    }    
+
+    Sms.find()
+      .select('_id mobile message status local')
+      .where({status: 0, local: 1})
+      .then(docs => {
+        if (!docs) {
+          return res.status(404).json({ status: false, msg: 'There are no sms' })
+        }
+       
+        console.log(docs.length)
+        res.json({count: docs.length, docs})
+      })
+      .catch(err => res.json({ status: false, data: err }))
   }
 )
 
