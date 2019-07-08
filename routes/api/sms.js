@@ -29,23 +29,24 @@ router.get(
   '/',
   (req, res) => {
     const DT = new Date()
+    let messages = []  
 
-    // counter++
+
+    counter++
     
-    // console.log(DT, ' read', counter)
-    // if(counter < 10) {
-    //   return res.status(500).json({err: 'Access Forbidden! '})
-    // } 
-    // counter = 0
+    console.log(DT, ' read', counter)
+    if(counter < 10) {
+      return res.json(messages)
+    } 
+    counter = 0
+
     // console.log('reset counter', counter)
-    // return res.status(500).json({err: 'Reset counter! ' + counter})
+    // return res.json(messages)
 
 
     if(!req.query.apiKey || req.query.apiKey !== apiKey) {
-      return res.status(500).json({err: 'Access Forbidden!'})
-    }
-
-    let messages = []    
+      return res.json(messages)
+    }      
 
     Sms.find()
       .select('_id mobile message status local')
