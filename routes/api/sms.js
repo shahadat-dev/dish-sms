@@ -30,13 +30,13 @@ router.get(
   (req, res) => {
     const DT = new Date()
 
-    counter++
+    // counter++
     
-    console.log(DT, ' read', counter)
-    if(counter < 10) {
-      return res.status(500).json({err: 'Access Forbidden! '})
-    } 
-    counter = 0
+    // console.log(DT, ' read', counter)
+    // if(counter < 10) {
+    //   return res.status(500).json({err: 'Access Forbidden! '})
+    // } 
+    // counter = 0
     // console.log('reset counter', counter)
     // return res.status(500).json({err: 'Reset counter! ' + counter})
 
