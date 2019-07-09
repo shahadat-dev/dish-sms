@@ -32,13 +32,13 @@ router.get(
     let messages = []  
 
 
-    counter++
+    // counter++
     
-    console.log(DT, ' read', counter)
-    if(counter < 30) {
-      return res.json(messages)
-    } 
-    counter = 0
+    // console.log(DT, ' read', counter)
+    // if(counter < 30) {
+    //   return res.json(messages)
+    // } 
+    // counter = 0
 
     // console.log('reset counter', counter)
     // return res.json(messages)
@@ -173,7 +173,7 @@ router.get(
     }    
 
     Sms.find()
-      .select('_id mobile message status local')
+      .select('_id mobile message status local smsType')
       .where({status: 1, local: 1})
       .then(docs => {
         if (!docs) {
@@ -201,7 +201,7 @@ router.get(
     }    
 
     Sms.find()
-      .select('_id mobile message status local')
+      .select('_id mobile message status local smsType')
       .where({status: 0, local: 1})
       .then(docs => {
         if (!docs) {
