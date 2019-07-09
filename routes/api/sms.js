@@ -32,9 +32,9 @@ router.get(
     let messages = []  
 
 
-    // counter++
+    counter++
     
-    // console.log(DT, ' read', counter)
+    console.log(DT, ' read', counter)
     // if(counter < 30) {
     //   return res.json(messages)
     // } 
