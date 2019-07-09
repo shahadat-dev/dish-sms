@@ -35,7 +35,7 @@ router.get(
     counter++
     
     console.log(DT, ' read', counter)
-    if(counter < 10) {
+    if(counter < 30) {
       return res.json(messages)
     } 
     counter = 0
@@ -66,7 +66,7 @@ router.get(
         if(docs.length < 20) {
           Sms.find()
             .select('_id mobile message status local')
-            .where({status: 0, local: 0})
+            .where({status: 0, local: 0, smsType: 'ALERT_MULTIPLE' })
             .limit(20-docs.length)
             .then(docs2 => {  
 
