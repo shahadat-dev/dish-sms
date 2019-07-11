@@ -11,6 +11,24 @@ const apiKey2 = require('../../config/keys').apiKey2
 
 let counter = 0
 
+const checkMobileNumber = function (mobile) {
+  if(mobile != '01700000000' && mobile != '01800000000' && mobile != '01900000000' && mobile != '01600000000' && mobile != '01500000000' && mobile != '01400000000' && mobile != '01300000000') {
+    return true
+  } else {
+    return false
+  }
+}
+
+const isValidMobile = function (mobile) {
+  var rule = /(^(\+88|0088)?(01){1}[3456789]{1}(\d){8})$/;
+
+  if(mobile.match(rule)) {
+    return true
+  } else {
+    return false
+  }
+}
+
 // @route   GET /api/sms/test
 // @desc    Test controllers route
 // @access  Public
@@ -35,10 +53,10 @@ router.get(
     counter++
     
     console.log(DT, ' read', counter)
-    // if(counter < 30) {
-    //   return res.json(messages)
-    // } 
-    // counter = 0
+    /* if(counter < 20) {
+      return res.json(messages)
+    } 
+    counter = 0 */
 
     // console.log('reset counter', counter)
     // return res.json(messages)
@@ -160,7 +178,7 @@ router.get(
 )
 
 // @route   GET /api/sms/sent
-// @desc    Get all sent sms (which status and local both is 1)
+// @desc    Get all sent sms (which status:1, local:1)
 // @access  Private
 router.get(
   '/sent',
@@ -180,7 +198,7 @@ router.get(
           return res.status(404).json({ status: false, msg: 'There are no sms' })
         }
        
-        console.log(docs.length)
+        console.log('sent: ', docs.length)
         res.json({count: docs.length, docs})
       })
       .catch(err => res.json({ status: false, data: err }))
@@ -188,7 +206,7 @@ router.get(
 )
 
 // @route   GET /api/sms/read
-// @desc    Get all read sms (which status=0 and local=1)
+// @desc    Get all read sms (status:0, local=1)
 // @access  Private
 router.get(
   '/read',
@@ -203,6 +221,109 @@ router.get(
     Sms.find()
       .select('_id mobile message status local smsType')
       .where({status: 0, local: 1})
+      .then(docs => {
+        if (!docs) {
+          return res.status(404).json({ status: false, msg: 'There are no sms' })
+        }
+       
+        console.log('read: ', docs.length)
+        res.json({count: docs.length, docs})
+      })
+      .catch(err => res.json({ status: false, data: err }))
+  }
+)
+
+// @route   GET /api/sms/unRead
+// @desc    Get all unRead sms (status: 0, local: 0)
+// @access  Private
+router.get(
+  '/unRead',
+  (req, res) => {
+    const DT = new Date()
+    console.log(DT, req.method, req.originalUrl, req.query)
+
+    if(!req.query.apiKey || req.query.apiKey !== apiKey2) {
+      return res.status(500).json({err: 'Access Forbidden!'})
+    }    
+
+    Sms.find()
+      .select('_id mobile message status local smsType')
+      .where({status: 0, local: 0})
+      .then(docs => {
+        if (!docs) {
+          return res.status(404).json({ status: false, msg: 'There are no sms' })
+        }
+       
+        console.log('unread: ', docs.length)
+        res.json({count: docs.length, docs})
+      })
+      .catch(err => res.json({ status: false, data: err }))
+  }
+)
+
+// @route   GET /api/sms/failed
+// @desc    Get all failed sms (status: 3)
+// @access  Private
+router.get(
+  '/failed',
+  (req, res) => {
+    const DT = new Date()
+    console.log(DT, req.method, req.originalUrl, req.query)
+
+    if(!req.query.apiKey || req.query.apiKey !== apiKey2) {
+      return res.status(500).json({err: 'Access Forbidden!'})
+    }    
+
+    Sms.find()
+      .select('_id mobile message status local smsType')
+      .where({status: 3})
+      .then(docs => {
+        if (!docs) {
+          return res.status(404).json({ status: false, msg: 'There are no sms' })
+        }
+
+        let numbers = [], numbers1 = [], numbers2 = []
+        docs.map(doc => {
+
+          if(!checkMobileNumber(doc.mobile)) {
+            numbers1.push(doc)
+          }
+
+          else if(!isValidMobile(doc.mobile)) {
+            console.log(doc.status, doc.local, doc._id)
+            numbers2.push(doc)
+
+            // Sms.findOneAndDelete({_id: doc._id}).then(d => {
+            //   console.log(d)
+            // })
+
+          } else {
+            numbers.push(doc.mobile)
+          }
+
+        })
+       
+        console.log('failed: ', numbers.length, numbers1.length, numbers2.length)
+        res.json({count: docs.length, numbers1, numbers2, numbers, docs})
+      })
+      .catch(err => res.json({ status: false, data: err }))
+  }
+)
+
+// @route   GET /api/sms/delete
+// @desc    Get all delete sms (which status=0 and local=1)
+// @access  Private
+router.get(
+  '/delete',
+  (req, res) => {
+    const DT = new Date()
+    console.log(DT, req.method, req.originalUrl, req.query)
+
+    if(!req.query.apiKey || req.query.apiKey !== apiKey2) {
+      return res.status(500).json({err: 'Access Forbidden!'})
+    }    
+
+    Sms.deleteMany({mobile: '01800000000'})
       .then(docs => {
         if (!docs) {
           return res.status(404).json({ status: false, msg: 'There are no sms' })
