@@ -67,8 +67,12 @@ router.get(
     }      
 
     Sms.find()
-      .select('_id mobile message status local')
-      .where({status: 0, local: 0, smsType: { $ne: 'ALERT_MULTIPLE' }})
+      .select('_id mobile message status local createdAt updatedAt')
+      .where({
+        status: 0, 
+        local: 0, 
+        smsType: { $ne: 'ALERT_MULTIPLE' }
+      })
       .limit(20)
       .then(docs => {        
         console.log('market: ', docs.length)
@@ -83,8 +87,15 @@ router.get(
 
         if(docs.length < 20) {
           Sms.find()
-            .select('_id mobile message status local')
-            .where({status: 0, local: 0, smsType: 'ALERT_MULTIPLE' })
+            .select('_id mobile message status local createdAt updatedAt')
+            .where({
+              status: 0, 
+              local: 0, 
+              smsType: 'ALERT_MULTIPLE',
+              updatedAt: {
+                $lte: new Date(new Date().getTime()-60*60*1000).toISOString()
+              }
+            })
             .limit(20-docs.length)
             .then(docs2 => {  
 
@@ -191,6 +202,7 @@ router.get(
     }    
 
     Sms.find()
+      // .explain('executionStats')
       .select('_id mobile message status local smsType')
       .where({status: 1, local: 1})
       .then(docs => {
@@ -219,6 +231,7 @@ router.get(
     }    
 
     Sms.find()
+      // .explain('executionStats')
       .select('_id mobile message status local smsType')
       .where({status: 0, local: 1})
       .then(docs => {
@@ -247,6 +260,7 @@ router.get(
     }    
 
     Sms.find()
+      // .explain('executionStats')
       .select('_id mobile message status local smsType')
       .where({status: 0, local: 0})
       .then(docs => {
