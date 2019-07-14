@@ -67,7 +67,7 @@ router.get(
     }      
 
     Sms.find()
-      .select('_id mobile message status local createdAt updatedAt')
+      .select('_id mobile message status local')
       .where({
         status: 0, 
         local: 0, 
@@ -87,14 +87,14 @@ router.get(
 
         if(docs.length < 20) {
           Sms.find()
-            .select('_id mobile message status local createdAt updatedAt')
+            .select('_id mobile message status local')
             .where({
               status: 0, 
               local: 0, 
               smsType: 'ALERT_MULTIPLE',
-              updatedAt: {
+              /* updatedAt: {
                 $lte: new Date(new Date().getTime()-60*60*1000).toISOString()
-              }
+              } */
             })
             .limit(20-docs.length)
             .then(docs2 => {  
@@ -203,15 +203,37 @@ router.get(
 
     Sms.find()
       // .explain('executionStats')
-      .select('_id mobile message status local smsType')
-      .where({status: 1, local: 1})
+      .select('_id mobile message status local smsType smsCount createdAt updatedAt')
+      .where({
+        status: 1, 
+        local: 1,
+        updatedAt: {
+          $gte: new Date(new Date().getTime()-1*60*60*1000).toISOString()
+        }
+      })
       .then(docs => {
         if (!docs) {
           return res.status(404).json({ status: false, msg: 'There are no sms' })
         }
        
         console.log('sent: ', docs.length)
-        res.json({count: docs.length, docs})
+
+        let smsCount = 0, billPaySms = 0, bulkSms = 0, bill = 0, bulk = 0
+
+        docs.map(doc => {
+          smsCount += doc.smsCount
+          if(doc.smsType == 'BILL_PAY') {
+            billPaySms += doc.smsCount
+            bill++
+          } else {
+            bulkSms += doc.smsCount
+            bulk++
+          }
+        })
+
+        console.log(`smsCount: ${smsCount}, \nbulk: ${bulk}, bulkSms: ${bulkSms},\nbill: ${bill} billSms: ${billPaySms}`)
+
+        res.json({count: docs.length, smsCount, bulkSms, billPaySms, docs})
       })
       .catch(err => res.json({ status: false, data: err }))
   }
@@ -233,7 +255,13 @@ router.get(
     Sms.find()
       // .explain('executionStats')
       .select('_id mobile message status local smsType')
-      .where({status: 0, local: 1})
+      .where({
+        status: 0, 
+        local: 1,
+        // updatedAt: {
+        //   $gte: new Date(new Date().getTime()-3*60*60*1000).toISOString()
+        // }
+      })
       .then(docs => {
         if (!docs) {
           return res.status(404).json({ status: false, msg: 'There are no sms' })
@@ -261,7 +289,7 @@ router.get(
 
     Sms.find()
       // .explain('executionStats')
-      .select('_id mobile message status local smsType')
+      .select('_id mobile message status local smsType feederID createdAt updatedAt')
       .where({status: 0, local: 0})
       .then(docs => {
         if (!docs) {
@@ -337,7 +365,29 @@ router.get(
       return res.status(500).json({err: 'Access Forbidden!'})
     }    
 
-    Sms.deleteMany({mobile: '01800000000'})
+    /* Sms.deleteMany({status: 0, local: 0, feederID: '5ca4aa69441b4911ee16b233'})
+      .then(docs => {
+        if (!docs) {
+          return res.status(404).json({ status: false, msg: 'There are no sms' })
+        }
+       
+        console.log(docs.length)
+        res.json({count: docs.length, docs})
+      })
+      .catch(err => res.json({ status: false, data: err })) */
+
+
+     
+
+      // change message
+
+      let dt = new Date('2019-07-13 18:10:48.818Z')
+
+      Sms.updateMany({status: 0, local: 0, feederID: '5c7d0df83419e40017f26bf0'}, {$set: 
+        {
+          updatedAt: dt        
+        }
+      })
       .then(docs => {
         if (!docs) {
           return res.status(404).json({ status: false, msg: 'There are no sms' })
@@ -347,6 +397,7 @@ router.get(
         res.json({count: docs.length, docs})
       })
       .catch(err => res.json({ status: false, data: err }))
+      
   }
 )
 
