@@ -181,8 +181,30 @@ router.get(
 
     Sms.updateMany({status: 0, local: 1}, {"$set":{local: 0}})
       .then(docs => {
-        console.log(docs.length)
-        res.json(docs)
+        console.log(docs.nModified)
+        res.json({status: true, data: docs})
+      })
+      .catch(err => console.log(err))
+  }
+)
+
+// @route   GET /api/sms/resetFailed
+// @desc    reset sms to local: 0, status: 0 if, status: 3, local: 1
+// @access  Private
+router.get(
+  '/resetFailed',
+  (req, res) => {
+    const DT = new Date()
+    console.log(DT, req.method, req.originalUrl, req.query)
+
+    if(!req.query.apiKey || req.query.apiKey !== apiKey2) {
+      return res.status(500).json({err: 'Access Forbidden!'})
+    }
+
+    Sms.updateMany({status: 3, local: 1}, {"$set":{local: 0, status: 0}})
+      .then(docs => {
+        console.log(docs.nModified)
+        res.json({status: true, data: docs})
       })
       .catch(err => console.log(err))
   }
@@ -203,7 +225,7 @@ router.get(
 
     Sms.find()
       // .explain('executionStats')
-      .select('_id mobile message status local smsType smsCount createdAt updatedAt')
+      .select('_id mobile message status feederID local smsType smsCount createdAt updatedAt')
       .where({
         status: 1, 
         local: 1,
@@ -233,7 +255,7 @@ router.get(
 
         console.log(`smsCount: ${smsCount}, \nbulk: ${bulk}, bulkSms: ${bulkSms},\nbill: ${bill} billSms: ${billPaySms}`)
 
-        res.json({count: docs.length, smsCount, bulkSms, billPaySms, docs})
+        res.json({status: true, count: docs.length, smsCount, bulkSms, billPaySms, docs})
       })
       .catch(err => res.json({ status: false, data: err }))
   }
@@ -254,7 +276,7 @@ router.get(
 
     Sms.find()
       // .explain('executionStats')
-      .select('_id mobile message status local smsType')
+      .select('_id mobile message status local smsType createdAt updatedAt')
       .where({
         status: 0, 
         local: 1,
@@ -268,7 +290,7 @@ router.get(
         }
        
         console.log('read: ', docs.length)
-        res.json({count: docs.length, docs})
+        res.json({status: true, count: docs.length, docs})
       })
       .catch(err => res.json({ status: false, data: err }))
   }
@@ -289,15 +311,20 @@ router.get(
 
     Sms.find()
       // .explain('executionStats')
-      .select('_id mobile message status local smsType feederID createdAt updatedAt')
+      .select('_id mobile message status local smsCount smsType feederID createdAt updatedAt')
       .where({status: 0, local: 0})
       .then(docs => {
         if (!docs) {
           return res.status(404).json({ status: false, msg: 'There are no sms' })
         }
+
+        let smsCount = 0
+        docs.map(doc => {
+          smsCount += doc.smsCount
+        })
        
-        console.log('unread: ', docs.length)
-        res.json({count: docs.length, docs})
+        console.log('unread: ', docs.length, 'smsCount: ', smsCount)
+        res.json({status: true, count: docs.length, smsCount, docs})
       })
       .catch(err => res.json({ status: false, data: err }))
   }
@@ -346,7 +373,7 @@ router.get(
         })
        
         console.log('failed: ', numbers.length, numbers1.length, numbers2.length)
-        res.json({count: docs.length, numbers1, numbers2, numbers, docs})
+        res.json({status: true, count: docs.length, numbers1, numbers2, numbers, docs})
       })
       .catch(err => res.json({ status: false, data: err }))
   }
@@ -363,31 +390,26 @@ router.get(
 
     if(!req.query.apiKey || req.query.apiKey !== apiKey2) {
       return res.status(500).json({err: 'Access Forbidden!'})
-    }    
+    } 
+    
+    // Sms.updateMany(
+    //   {
+    //     status: 1, 
+    //     local: 1, 
+    //     feederID: "5d3a9f851498a04529933a7c",
+    //     message: { "$regex": "তারিখের মধ্যে বকেয়া", "$options": "i" }
+    //   },
+    //   {"$set":{status: 4}})
 
-    /* Sms.deleteMany({status: 0, local: 0, feederID: '5ca4aa69441b4911ee16b233'})
-      .then(docs => {
-        if (!docs) {
-          return res.status(404).json({ status: false, msg: 'There are no sms' })
-        }
-       
-        console.log(docs.length)
-        res.json({count: docs.length, docs})
-      })
-      .catch(err => res.json({ status: false, data: err })) */
-
-
-     
-
-      // change message
-
-      let dt = new Date('2019-07-13 18:10:48.818Z')
-
-      Sms.updateMany({status: 0, local: 0, feederID: '5c7d0df83419e40017f26bf0'}, {$set: 
-        {
-          updatedAt: dt        
-        }
-      })
+    Sms.find(
+      {
+        status: 0, 
+        local: 1, 
+        smsType: 'ALERT_MULTIPLE',
+        feederID: "5c84d728217acd00178a75a3",
+        // message: { "$regex": "তারিখের মধ্যে বকেয়া", "$options": "i" }
+      }
+    )
       .then(docs => {
         if (!docs) {
           return res.status(404).json({ status: false, msg: 'There are no sms' })
@@ -397,6 +419,28 @@ router.get(
         res.json({count: docs.length, docs})
       })
       .catch(err => res.json({ status: false, data: err }))
+
+
+     
+
+      // change message
+
+      /* let dt = new Date('2019-07-13 18:10:48.818Z')
+
+      Sms.updateMany({smsType: 'BROADCAST'}, {$set: 
+        {
+          message: `ডিশ/ইন্টারনেট ব্যবসায়ীদের জন্য সুখবর। আপনাদের জন্য নিয়ে এসেছি ডিজিটাল বিল ম্যানেজমেন্ট সফটওয়্যার। যেমন,গ্রাহকের কাছ থেকে বিল নেওয়ার সময় গ্রাহক SMS পাবে ও বিলের কপি প্রিন্ট হবে।বিস্তারিত 01309002530`        
+        }
+      })
+      .then(docs => {
+        if (!docs) {
+          return res.status(404).json({ status: false, msg: 'There are no sms' })
+        }
+       
+        console.log(docs.length)
+        res.json({count: docs.length, docs})
+      })
+      .catch(err => res.json({ status: false, data: err })) */
       
   }
 )
