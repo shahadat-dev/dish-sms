@@ -221,17 +221,29 @@ router.get(
 
     if(!req.query.apiKey || req.query.apiKey !== apiKey2) {
       return res.status(500).json({err: 'Access Forbidden!'})
-    }    
+    }
+
+    const dt = new Date()
+    let startTime, endTime = new Date(dt.getTime()).toISOString()
+
+    if(req.query.time){
+      if(req.query.time == '1_hour'){
+        startTime = new Date(dt.getTime()-60*60*1000).toISOString()
+      }
+      else if(req.query.time == 'Today'){        
+        startTime = new Date(dt.getTime()-60*60*1000*dt.getHours()).toISOString()
+      }else if(req.query.time == 'Yesterday'){
+        startTime = new Date(dt.getTime()-60*60*1000*(dt.getHours()+24)).toISOString()
+        endTime = new Date(dt.getTime()-60*60*1000*dt.getHours()).toISOString()
+      }    
+    }
 
     Sms.find()
-      // .explain('executionStats')
       .select('_id mobile message status feederID local smsType smsCount createdAt updatedAt')
       .where({
         status: 1, 
         local: 1,
-        updatedAt: {
-          $gte: new Date(new Date().getTime()-1*60*60*1000).toISOString()
-        }
+        $and: [{updatedAt: {$gte: startTime}}, {updatedAt: {$lte: endTime}}]
       })
       .then(docs => {
         if (!docs) {
@@ -255,7 +267,7 @@ router.get(
 
         console.log(`smsCount: ${smsCount}, \nbulk: ${bulk}, bulkSms: ${bulkSms},\nbill: ${bill} billSms: ${billPaySms}`)
 
-        res.json({status: true, count: docs.length, smsCount, bulkSms, billPaySms, docs})
+        res.json({status: true, count: docs.length, smsCount, bill, bulk, bulkSms, billPaySms, docs})
       })
       .catch(err => res.json({ status: false, data: err }))
   }
@@ -401,13 +413,16 @@ router.get(
     //   },
     //   {"$set":{status: 4}})
 
-    Sms.find(
+    /* Sms.find(
       {
-        status: 0, 
+        status: 1, 
         local: 1, 
         smsType: 'ALERT_MULTIPLE',
-        feederID: "5c84d728217acd00178a75a3",
+        feederID: "5cd3d0f66895ee108394ef4d",
         // message: { "$regex": "তারিখের মধ্যে বকেয়া", "$options": "i" }
+        createdAt: {
+            $gte: new Date(new Date().getTime()-3*60*60*1000).toISOString()
+          }
       }
     )
       .then(docs => {
@@ -418,7 +433,7 @@ router.get(
         console.log(docs.length)
         res.json({count: docs.length, docs})
       })
-      .catch(err => res.json({ status: false, data: err }))
+      .catch(err => res.json({ status: false, data: err })) */
 
 
      
