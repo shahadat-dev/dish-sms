@@ -288,20 +288,15 @@ router.get(
 
     Sms.find()
       // .explain('executionStats')
-      .select('_id mobile message status local smsType createdAt updatedAt')
+      .select('_id mobile message status local smsType feederID smsCount createdAt updatedAt')
       .where({
         status: 0, 
-        local: 1,
-        // updatedAt: {
-        //   $gte: new Date(new Date().getTime()-3*60*60*1000).toISOString()
-        // }
+        local: 1
       })
       .then(docs => {
         if (!docs) {
           return res.status(404).json({ status: false, msg: 'There are no sms' })
         }
-       
-        console.log('read: ', docs.length)
         res.json({status: true, count: docs.length, docs})
       })
       .catch(err => res.json({ status: false, data: err }))
@@ -329,14 +324,7 @@ router.get(
         if (!docs) {
           return res.status(404).json({ status: false, msg: 'There are no sms' })
         }
-
-        let smsCount = 0
-        docs.map(doc => {
-          smsCount += doc.smsCount
-        })
-       
-        console.log('unread: ', docs.length, 'smsCount: ', smsCount)
-        res.json({status: true, count: docs.length, smsCount, docs})
+        res.json({status: true, count: docs.length, docs})
       })
       .catch(err => res.json({ status: false, data: err }))
   }
@@ -356,36 +344,13 @@ router.get(
     }    
 
     Sms.find()
-      .select('_id mobile message status local smsType')
+      .select('_id mobile message status local smsType feederID smsCount createdAt updatedAt')
       .where({status: 3})
       .then(docs => {
         if (!docs) {
           return res.status(404).json({ status: false, msg: 'There are no sms' })
         }
-
-        let numbers = [], numbers1 = [], numbers2 = []
-        docs.map(doc => {
-
-          if(!checkMobileNumber(doc.mobile)) {
-            numbers1.push(doc)
-          }
-
-          else if(!isValidMobile(doc.mobile)) {
-            console.log(doc.status, doc.local, doc._id)
-            numbers2.push(doc)
-
-            // Sms.findOneAndDelete({_id: doc._id}).then(d => {
-            //   console.log(d)
-            // })
-
-          } else {
-            numbers.push(doc.mobile)
-          }
-
-        })
-       
-        console.log('failed: ', numbers.length, numbers1.length, numbers2.length)
-        res.json({status: true, count: docs.length, numbers1, numbers2, numbers, docs})
+        res.json({status: true, count: docs.length, docs})
       })
       .catch(err => res.json({ status: false, data: err }))
   }
