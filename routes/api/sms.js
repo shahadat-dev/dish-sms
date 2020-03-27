@@ -245,6 +245,7 @@ router.get(
         local: 1,
         $and: [{updatedAt: {$gte: startTime}}, {updatedAt: {$lte: endTime}}]
       })
+      .sort({updatedAt: -1})
       .then(docs => {
         if (!docs) {
           return res.status(404).json({ status: false, msg: 'There are no sms' })
@@ -293,6 +294,7 @@ router.get(
         status: 0, 
         local: 1
       })
+      .sort({updatedAt: -1})
       .then(docs => {
         if (!docs) {
           return res.status(404).json({ status: false, msg: 'There are no sms' })
@@ -346,6 +348,7 @@ router.get(
     Sms.find()
       .select('_id mobile message status local smsType feederID smsCount createdAt updatedAt')
       .where({status: 3})
+      .sort({updatedAt: -1})
       .then(docs => {
         if (!docs) {
           return res.status(404).json({ status: false, msg: 'There are no sms' })
