@@ -253,22 +253,25 @@ router.get(
        
         console.log('sent: ', docs.length)
 
-        let smsCount = 0, billPaySms = 0, bulkSms = 0, bill = 0, bulk = 0
+        let smsCount = 0, billPaySms = 0, bulkSms = 0, bill = 0, bulk = 0, billDocs = [], bulkDocs = []
 
-        docs.map(doc => {
+        /* docs.map(doc => {
           smsCount += doc.smsCount
           if(doc.smsType == 'BILL_PAY') {
             billPaySms += doc.smsCount
             bill++
+            billDocs.push(doc)
           } else {
             bulkSms += doc.smsCount
             bulk++
+            bulkDocs.push(doc)
           }
-        })
+        }) */
 
-        console.log(`smsCount: ${smsCount}, \nbulk: ${bulk}, bulkSms: ${bulkSms},\nbill: ${bill} billSms: ${billPaySms}`)
+        // console.log(`smsCount: ${smsCount}, \nbulk: ${bulk}, bulkSms: ${bulkSms},\nbill: ${bill} billSms: ${billPaySms}`)
 
-        res.json({status: true, count: docs.length, smsCount, bill, bulk, bulkSms, billPaySms, docs})
+        // res.json({status: true, count: docs.length, smsCount, bill, bulk, bulkSms, billPaySms, docs, billDocs, bulkDocs})
+        res.json({status: true, docs})
       })
       .catch(err => res.json({ status: false, data: err }))
   }
@@ -299,7 +302,7 @@ router.get(
         if (!docs) {
           return res.status(404).json({ status: false, msg: 'There are no sms' })
         }
-        res.json({status: true, count: docs.length, docs})
+        res.json({status: true, docs})
       })
       .catch(err => res.json({ status: false, data: err }))
   }
@@ -326,7 +329,7 @@ router.get(
         if (!docs) {
           return res.status(404).json({ status: false, msg: 'There are no sms' })
         }
-        res.json({status: true, count: docs.length, docs})
+        res.json({status: true, docs})
       })
       .catch(err => res.json({ status: false, data: err }))
   }
@@ -353,7 +356,7 @@ router.get(
         if (!docs) {
           return res.status(404).json({ status: false, msg: 'There are no sms' })
         }
-        res.json({status: true, count: docs.length, docs})
+        res.json({status: true, docs})
       })
       .catch(err => res.json({ status: false, data: err }))
   }
