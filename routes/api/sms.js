@@ -197,7 +197,7 @@ router.get("/resetFailed", (req, res) => {
 
   let modem = req.query.modem ? req.query.modem : 0
 
-  Sms.updateMany({ status: 3, local: 1, modem }, { $set: { local: 0, status: 0 } })
+  Sms.updateMany({ status: 3, local: 1 }, { $set: { local: 0, status: 0 } })
     .then((docs) => {
       console.log(docs.nModified)
       res.json({ status: true, data: docs })
@@ -216,7 +216,7 @@ router.get("/sent", (req, res) => {
     return res.status(500).json({ err: "Access Forbidden!" })
   }
 
-  let modem = req.query.modem ? req.query.modem : 0
+  // let modem = req.query.modem ? req.query.modem : 0
 
   const dt = new Date()
   let startTime,
@@ -238,7 +238,7 @@ router.get("/sent", (req, res) => {
     .where({
       status: 1,
       local: 1,
-      modem,
+      // modem,
       $and: [{ updatedAt: { $gte: startTime } }, { updatedAt: { $lte: endTime } }],
     })
     .sort({ updatedAt: -1 })
@@ -289,7 +289,7 @@ router.get("/read", (req, res) => {
     return res.status(500).json({ err: "Access Forbidden!" })
   }
 
-  let modem = req.query.modem ? req.query.modem : 0
+  // let modem = req.query.modem ? req.query.modem : 0
 
   Sms.find()
     // .explain('executionStats')
@@ -297,7 +297,7 @@ router.get("/read", (req, res) => {
     .where({
       status: 0,
       local: 1,
-      modem,
+      // modem,
     })
     .sort({ updatedAt: -1 })
     .then((docs) => {
@@ -344,11 +344,11 @@ router.get("/failed", (req, res) => {
     return res.status(500).json({ err: "Access Forbidden!" })
   }
 
-  let modem = req.query.modem ? req.query.modem : 0
+  // let modem = req.query.modem ? req.query.modem : 0
 
   Sms.find()
     .select("_id mobile message status local smsType feederID smsCount createdAt updatedAt")
-    .where({ status: 3, modem })
+    .where({ status: 3 })
     .sort({ updatedAt: -1 })
     .then((docs) => {
       if (!docs) {

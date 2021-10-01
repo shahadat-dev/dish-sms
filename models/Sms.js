@@ -51,7 +51,8 @@ const SmsSchema = new Schema(
       enum: [
         0,
         1,
-        2, // 0: not sent, 1: sent, 2: failed
+        2,
+        3, // 0: not sent, 1: sent, 2: failed
       ],
       default: 0,
       required: true,
