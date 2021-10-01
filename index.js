@@ -1,14 +1,15 @@
-const express = require('express')
-const cors = require('cors')
-const mongoose = require('mongoose')
-const bodyParser = require('body-parser')
-var Fawn = require('fawn')
-var compression = require('compression')
+const express = require("express")
+const cors = require("cors")
+const mongoose = require("mongoose")
+const bodyParser = require("body-parser")
+var Fawn = require("fawn")
+var compression = require("compression")
 
 const app = express()
 
 // Routes
-const sms = require('./routes/api/sms')
+const sms = require("./routes/api/sms")
+const smsV2 = require("./routes/api/sms-v2")
 
 // compress all responses
 app.use(compression())
@@ -16,7 +17,7 @@ app.use(compression())
 // Body parser middleware
 app.use(
   bodyParser.urlencoded({
-    extended: false
+    extended: false,
   })
 )
 app.use(bodyParser.json())
@@ -25,25 +26,21 @@ app.use(bodyParser.json())
 app.use(cors())
 
 //DB config
-const db = require('./config/keys').mongoURI
+const db = require("./config/keys").mongoURI
 
 // Connect to MongoDB
 mongoose
-  .connect(db,  { useNewUrlParser: true })
-  .then(() => console.log('MongoDB connected.'))
-  .catch(err => console.log(err))
+  .connect(db, { useNewUrlParser: true })
+  .then(() => console.log("MongoDB connected."))
+  .catch((err) => console.log(err))
 
 // Initialize Fawn
 Fawn.init(mongoose)
 
 // Use Routes
-app.use('/api/sms', sms)
-
+app.use("/api/sms", sms)
+app.use("/api/sms/v2", smsV2)
 
 const port = process.env.PORT || 61952
 
-
 app.listen(port, () => console.log(`Server is running on port ${port}`))
-
-
-
