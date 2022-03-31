@@ -47,7 +47,7 @@ router.get("/test", (req, res) =>
 )
 
 // @route   GET /api/sms
-// @desc    Get all sms which status:0 & local:0
+// @desc    Get all sms which status:pending & read:false
 // @access  Private
 router.get("/", (req, res) => {
   const DT = new Date()
@@ -69,11 +69,11 @@ router.get("/", (req, res) => {
   }
 
   Sms.find()
-    .select("_id mobile message status local")
+    .select("_id mobile message status read")
     .where({
-      status: 0,
-      local: 0,
-      smsType: { $ne: "ALERT_MULTIPLE" },
+      status: "pending",
+      read: false,
+      type: { $ne: "bulk" },
     })
     .limit(20)
     .then((docs) => {
@@ -89,11 +89,11 @@ router.get("/", (req, res) => {
 
       if (docs.length < 20) {
         Sms.find()
-          .select("_id mobile message status local")
+          .select("_id mobile message status read")
           .where({
-            status: 0,
-            local: 0,
-            smsType: "ALERT_MULTIPLE",
+            status: "pending",
+            read: false,
+            type: "bulk",
             /* updatedAt: {
                 $lte: new Date(new Date().getTime()-60*60*1000).toISOString()
               } */
@@ -121,8 +121,8 @@ router.get("/", (req, res) => {
     .catch((err) => res.json({ status: false, data: err }))
 })
 
-// @route   POST /api/sms/update?apiKey=value&id=value&status=0&local=1
-// @desc    Update sms status and local
+// @route   POST /api/sms/update?apiKey=value&id=value&status=pending&read=true
+// @desc    Update sms status and read
 // @access  Private
 router.get("/update", (req, res) => {
   const DT = new Date()
@@ -140,19 +140,21 @@ router.get("/update", (req, res) => {
     return res.status(400).json({ err: "Invalid ID!" })
   }
 
-  if (req.query.status < 0 || req.query.status > 3) {
-    return res.status(400).json({ err: "Bad data!" })
+  if (!["pending", "sent", "failed"].includes(req.query.status)) {
+    return res.status(400).json({ err: "Bad status query!" })
   }
 
-  if (req.query.local < 0 || req.query.local > 3) {
-    return res.status(400).json({ err: "Bad data!" })
+  if (req.query.read !== true || req.query.read !== false) {
+    return res.status(400).json({ err: "Bad read query!" })
   }
 
   Sms.findById(req.query.id).then((sms) => {
     if (!sms) return res.status(404).json({ err: "Document not found!" })
 
     sms.status = req.query.status || sms.status
-    sms.local = req.query.local || sms.local
+    sms.read = req.query.read || sms.read
+    if (req.query.read === "true") sms.read = true
+    else sms.read = false
 
     sms
       .save()
@@ -164,7 +166,7 @@ router.get("/update", (req, res) => {
 })
 
 // @route   GET /api/sms/reset
-// @desc    reset sms local to 0 if status is 0
+// @desc    reset sms read to false if status is pending
 // @access  Private
 router.get("/reset", (req, res) => {
   const DT = new Date()
@@ -176,7 +178,7 @@ router.get("/reset", (req, res) => {
 
   let modem = req.query.modem ? req.query.modem : 0
 
-  Sms.updateMany({ status: 0, local: 1, modem }, { $set: { local: 0 } })
+  Sms.updateMany({ status: "pending", read: true, modem }, { $set: { read: false } })
     .then((docs) => {
       console.log(docs.nModified)
       res.json({ status: true, data: docs })
@@ -185,7 +187,7 @@ router.get("/reset", (req, res) => {
 })
 
 // @route   GET /api/sms/resetFailed
-// @desc    reset sms to local: 0, status: 0 if, status: 3, local: 1
+// @desc    reset sms to read: false, status: "pending" if, status: failed, read: true
 // @access  Private
 router.get("/resetFailed", (req, res) => {
   const DT = new Date()
@@ -197,7 +199,7 @@ router.get("/resetFailed", (req, res) => {
 
   let modem = req.query.modem ? req.query.modem : 0
 
-  Sms.updateMany({ status: 3, local: 1 }, { $set: { local: 0, status: 0 } })
+  Sms.updateMany({ status: "failed", read: true }, { $set: { read: false, status: "pending" } })
     .then((docs) => {
       console.log(docs.nModified)
       res.json({ status: true, data: docs })
@@ -206,7 +208,7 @@ router.get("/resetFailed", (req, res) => {
 })
 
 // @route   GET /api/sms/sent
-// @desc    Get all sent sms (which status:1, local:1)
+// @desc    Get all sent sms (which status:1, read:1)
 // @access  Private
 router.get("/sent", (req, res) => {
   const DT = new Date()
@@ -234,10 +236,10 @@ router.get("/sent", (req, res) => {
   }
 
   Sms.find()
-    .select("_id mobile message status feederID local smsType smsCount createdAt updatedAt")
+    .select("_id mobile message status feederID read type count createdAt updatedAt")
     .where({
-      status: 1,
-      local: 1,
+      status: "sent",
+      read: true,
       // modem,
       $and: [{ updatedAt: { $gte: startTime } }, { updatedAt: { $lte: endTime } }],
     })
@@ -258,13 +260,13 @@ router.get("/sent", (req, res) => {
         bulkDocs = []
 
       /* docs.map(doc => {
-          smsCount += doc.smsCount
-          if(doc.smsType == 'BILL_PAY') {
-            billPaySms += doc.smsCount
+          smsCount += doc.count
+          if(doc.type == 'bill') {
+            billPaySms += doc.count
             bill++
             billDocs.push(doc)
           } else {
-            bulkSms += doc.smsCount
+            bulkSms += doc.count
             bulk++
             bulkDocs.push(doc)
           }
@@ -279,7 +281,7 @@ router.get("/sent", (req, res) => {
 })
 
 // @route   GET /api/sms/read
-// @desc    Get all read sms (status:0, local=1)
+// @desc    Get all read sms (status:pending, read=true)
 // @access  Private
 router.get("/read", (req, res) => {
   const DT = new Date()
@@ -293,10 +295,10 @@ router.get("/read", (req, res) => {
 
   Sms.find()
     // .explain('executionStats')
-    .select("_id mobile message status local smsType feederID smsCount createdAt updatedAt")
+    .select("_id mobile message status read type feederID count createdAt updatedAt")
     .where({
-      status: 0,
-      local: 1,
+      status: "pending",
+      read: true,
       // modem,
     })
     .sort({ updatedAt: -1 })
@@ -310,7 +312,7 @@ router.get("/read", (req, res) => {
 })
 
 // @route   GET /api/sms/unRead
-// @desc    Get all unRead sms (status: 0, local: 0)
+// @desc    Get all unRead sms (status: "pending", read: false)
 // @access  Private
 router.get("/unRead", (req, res) => {
   const DT = new Date()
@@ -322,8 +324,8 @@ router.get("/unRead", (req, res) => {
 
   Sms.find()
     // .explain('executionStats')
-    .select("_id mobile message status local smsCount smsType feederID createdAt updatedAt")
-    .where({ status: 0, local: 0 })
+    .select("_id mobile message status read count type feederID createdAt updatedAt")
+    .where({ status: "pending", read: false })
     .then((docs) => {
       if (!docs) {
         return res.status(404).json({ status: false, msg: "There are no sms" })
@@ -347,8 +349,8 @@ router.get("/failed", (req, res) => {
   // let modem = req.query.modem ? req.query.modem : 0
 
   Sms.find()
-    .select("_id mobile message status local smsType feederID smsCount createdAt updatedAt")
-    .where({ status: 3 })
+    .select("_id mobile message status read type feederID count createdAt updatedAt")
+    .where({ status: "failed" })
     .sort({ updatedAt: -1 })
     .then((docs) => {
       if (!docs) {
@@ -360,7 +362,7 @@ router.get("/failed", (req, res) => {
 })
 
 // @route   GET /api/sms/delete
-// @desc    Get all delete sms (which status=0 and local=1)
+// @desc    Get all delete sms (which status=failed and read=true)
 // @access  Private
 router.get("/delete", (req, res) => {
   const DT = new Date()
@@ -372,8 +374,8 @@ router.get("/delete", (req, res) => {
 
   // Sms.updateMany(
   //   {
-  //     status: 1,
-  //     local: 1,
+  //     status: "sent",
+  //     read: true,
   //     feederID: "5d3a9f851498a04529933a7c",
   //     message: { "$regex": "তারিখের মধ্যে বকেয়া", "$options": "i" }
   //   },
@@ -381,9 +383,9 @@ router.get("/delete", (req, res) => {
 
   /* Sms.find(
       {
-        status: 1, 
-        local: 1, 
-        smsType: 'ALERT_MULTIPLE',
+        status: "sent", 
+        read: true, 
+        type: 'bulk',
         feederID: "5cd3d0f66895ee108394ef4d",
         // message: { "$regex": "তারিখের মধ্যে বকেয়া", "$options": "i" }
         createdAt: {
@@ -405,7 +407,7 @@ router.get("/delete", (req, res) => {
 
   /* let dt = new Date('2019-07-13 18:10:48.818Z')
 
-      Sms.updateMany({smsType: 'BROADCAST'}, {$set: 
+      Sms.updateMany({type: 'BROADCAST'}, {$set: 
         {
           message: `ডিশ/ইন্টারনেট ব্যবসায়ীদের জন্য সুখবর। আপনাদের জন্য নিয়ে এসেছি ডিজিটাল বিল ম্যানেজমেন্ট সফটওয়্যার। যেমন,গ্রাহকের কাছ থেকে বিল নেওয়ার সময় গ্রাহক SMS পাবে ও বিলের কপি প্রিন্ট হবে।বিস্তারিত 01309002530`        
         }

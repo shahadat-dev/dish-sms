@@ -1,83 +1,52 @@
 const mongoose = require("mongoose")
-const Schema = mongoose.Schema
 
-const SmsSchema = new Schema(
+const smsSchema = mongoose.Schema(
   {
-    feederID: {
-      type: Schema.Types.ObjectId,
-      ref: "feeder",
-      required: true,
-    },
-    apiResponseData: {
-      type: Object,
+    app: {
+      type: String,
+      enum: ["isp", "bayannopay", "kistipay", "hisabnikash"],
     },
     mobile: {
       type: String,
       required: true,
+      min: 11,
+      max: 11,
     },
     message: {
       type: String,
       required: true,
-      default: "Test SMS",
     },
-    smsCount: {
+    count: {
       type: Number,
-      enum: [1, 2, 3, 4, 5, 6],
-      default: 1,
-      required: true,
+      min: 1,
+      max: 6,
     },
-    smsType: {
+    type: {
       type: String,
-      enum: [
-        "NEW_USER",
-        "NEW_COLLECTOR",
-        "NEW_MANAGER",
-        "NEW_FEEDER",
-        "BILL_PAY",
-        "DEPOSIT_PAY",
-        "DEPOSIT_CONFIRM",
-        "WARNING_SINGLE",
-        "WARNING_MULTIPLE",
-        "ALERT_SINGLE",
-        "ALERT_MULTIPLE",
-        "BROADCAST",
-        "DEFAULT",
-      ],
-      default: "DEFAULT",
-      required: true,
+      enum: ["auth", "bill", "payment", "alert", "bulk", "other"],
+      default: "bill",
     },
     status: {
-      type: Number,
-      enum: [
-        0,
-        1,
-        2,
-        3, // 0: not sent, 1: sent, 2: failed
-      ],
-      default: 0,
-      required: true,
+      type: String,
+      enum: ["pending", "sent", "failed"],
+      default: "pending",
     },
-    local: {
-      type: Number,
-      enum: [
-        0,
-        1,
-        2, // 0: unread, 1: read
-      ],
-      default: 0,
-      required: true,
+    read: {
+      type: Boolean,
+      default: false,
     },
-    modem: {
-      type: Number,
-      enum: [
-        0,
-        1, // 1: old modem(7 port)
-        2, // 2: new modem(5 port)
-      ],
-      default: 0,
+    senderId: {
+      type: mongoose.SchemaTypes.ObjectId,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 )
 
-module.exports = Sms = mongoose.model("sms", SmsSchema)
+/**
+ * @typedef Sms
+ */
+const Sms = mongoose.model("Sms", smsSchema)
+
+module.exports = Sms
