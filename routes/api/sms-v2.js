@@ -21,7 +21,7 @@ router.get("/test", (req, res) =>
 )
 
 // @route   GET /api/sms/v2/reset_read
-// @desc    reset sms local to 0 if status is 0
+// @desc    reset sms read to false if status:pending and read: true
 // @access  Private
 router.get("/reset_read", (req, res) => {
   const DT = new Date()
@@ -37,7 +37,7 @@ router.get("/reset_read", (req, res) => {
 
   let modem = req.query.modem ? req.query.modem : 0
 
-  Sms.updateMany({ status: 0, local: 1, modem }, { $set: { local: 0 } })
+  Sms.updateMany({ status: "pending", read: true, modem }, { $set: { read: false } })
     .then((docs) => {
       console.log(docs.nModified)
       res.json({ status: true, count: docs.nModified })
@@ -46,7 +46,7 @@ router.get("/reset_read", (req, res) => {
 })
 
 // @route   GET /api/sms/v2/reset_failed
-// @desc    reset sms to local: 0, status: 0 if, status: 3, local: 1
+// @desc    reset sms to read: false, status: "pending" if, status: "failed", read: true
 // @access  Private
 router.get("/reset_failed", (req, res) => {
   const DT = new Date()
@@ -62,7 +62,7 @@ router.get("/reset_failed", (req, res) => {
 
   let modem = req.query.modem ? req.query.modem : 0
 
-  Sms.updateMany({ status: 3, local: 1, modem }, { $set: { local: 0, status: 0 } })
+  Sms.updateMany({ status: "failed", read: true, modem }, { $set: { read: false, status: "pending" } })
     .then((docs) => {
       console.log(docs.nModified)
       res.json({ status: true, count: docs.nModified })
@@ -71,7 +71,7 @@ router.get("/reset_failed", (req, res) => {
 })
 
 // @route   GET /api/sms/v2/sent
-// @desc    Get all sent sms (which status:1, local:1)
+// @desc    Get all sent sms (which status:sent, read:true)
 // @access  Private
 router.get("/sent", (req, res) => {
   const DT = new Date()
@@ -104,8 +104,8 @@ router.get("/sent", (req, res) => {
 
   Sms.countDocuments()
     .where({
-      status: 1,
-      local: 1,
+      status: "sent",
+      read: true,
       modem,
       // $and: [{ updatedAt: { $gte: startTime } }, { updatedAt: { $lte: endTime } }],
       updatedAt: { $gte: startTime, $lt: endTime },
@@ -118,7 +118,7 @@ router.get("/sent", (req, res) => {
 })
 
 // @route   GET /api/sms/v2/read
-// @desc    Get all read sms (status:0, local=1)
+// @desc    Get all read sms (status:pending, read:true)
 // @access  Private
 router.get("/read", (req, res) => {
   const DT = new Date()
@@ -135,8 +135,8 @@ router.get("/read", (req, res) => {
 
   Sms.countDocuments()
     .where({
-      status: 0,
-      local: 1,
+      status: "pending",
+      read: true,
       modem,
     })
     .then((count) => {
@@ -147,7 +147,7 @@ router.get("/read", (req, res) => {
 })
 
 // @route   GET /api/sms/v2/unread
-// @desc    Get all unread sms (status: 0, local: 0)
+// @desc    Get all unread sms (status: "pending", read: false)
 // @access  Private
 router.get("/unread", (req, res) => {
   const DT = new Date()
@@ -158,7 +158,7 @@ router.get("/unread", (req, res) => {
   }
 
   Sms.countDocuments()
-    .where({ status: 0, local: 0 })
+    .where({ status: "pending", read: false })
     .then((count) => {
       console.log(count)
       res.json({ status: true, count })
@@ -167,7 +167,7 @@ router.get("/unread", (req, res) => {
 })
 
 // @route   GET /api/sms/v2/failed
-// @desc    Get all failed sms (status: 3)
+// @desc    Get all failed sms (status: "failed")
 // @access  Private
 router.get("/failed", (req, res) => {
   const DT = new Date()
@@ -180,7 +180,7 @@ router.get("/failed", (req, res) => {
   let modem = req.query.modem ? req.query.modem : 0
 
   Sms.countDocuments()
-    .where({ status: 3, modem })
+    .where({ status: "failed", modem })
     .then((count) => {
       console.log(count)
       res.json({ status: true, count })
