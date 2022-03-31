@@ -31,13 +31,7 @@ router.get("/reset_read", (req, res) => {
     return res.status(500).json({ err: "Access Forbidden!" })
   }
 
-  if (!req.query.modem) {
-    return res.json({ status: false, msg: "modem is required" })
-  }
-
-  let modem = req.query.modem ? req.query.modem : 0
-
-  Sms.updateMany({ status: "pending", read: true, modem }, { $set: { read: false } })
+  Sms.updateMany({ status: "pending", read: true }, { $set: { read: false } })
     .then((docs) => {
       console.log(docs.nModified)
       res.json({ status: true, count: docs.nModified })
@@ -56,13 +50,7 @@ router.get("/reset_failed", (req, res) => {
     return res.status(500).json({ err: "Access Forbidden!" })
   }
 
-  if (!req.query.modem) {
-    return res.json({ status: false, msg: "modem is required" })
-  }
-
-  let modem = req.query.modem ? req.query.modem : 0
-
-  Sms.updateMany({ status: "failed", read: true, modem }, { $set: { read: false, status: "pending" } })
+  Sms.updateMany({ status: "failed", read: true }, { $set: { read: false, status: "pending" } })
     .then((docs) => {
       console.log(docs.nModified)
       res.json({ status: true, count: docs.nModified })
@@ -80,12 +68,6 @@ router.get("/sent", (req, res) => {
   if (!req.query.apiKey || req.query.apiKey !== apiKey2) {
     return res.status(500).json({ err: "Access Forbidden!" })
   }
-
-  if (!req.query.modem) {
-    return res.json({ status: false, msg: "modem is required" })
-  }
-
-  let modem = req.query.modem ? req.query.modem : 0
 
   const dt = new Date()
   let startTime,
@@ -106,7 +88,7 @@ router.get("/sent", (req, res) => {
     .where({
       status: "sent",
       read: true,
-      modem,
+
       // $and: [{ updatedAt: { $gte: startTime } }, { updatedAt: { $lte: endTime } }],
       updatedAt: { $gte: startTime, $lt: endTime },
     })
@@ -127,17 +109,11 @@ router.get("/read", (req, res) => {
   if (!req.query.apiKey || req.query.apiKey !== apiKey2) {
     return res.status(500).json({ err: "Access Forbidden!" })
   }
-  if (!req.query.modem) {
-    return res.json({ status: false, msg: "modem is required" })
-  }
-
-  let modem = req.query.modem ? req.query.modem : 0
 
   Sms.countDocuments()
     .where({
       status: "pending",
       read: true,
-      modem,
     })
     .then((count) => {
       console.log(count)
@@ -177,10 +153,8 @@ router.get("/failed", (req, res) => {
     return res.status(500).json({ err: "Access Forbidden!" })
   }
 
-  let modem = req.query.modem ? req.query.modem : 0
-
   Sms.countDocuments()
-    .where({ status: "failed", modem })
+    .where({ status: "failed" })
     .then((count) => {
       console.log(count)
       res.json({ status: true, count })
