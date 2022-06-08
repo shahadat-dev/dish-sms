@@ -361,16 +361,25 @@ router.get("/failed", (req, res) => {
     .catch((err) => res.json({ status: false, data: err }))
 })
 
-// @route   GET /api/sms/delete
+// @route   GET /api/sms/deleteFailedSms
 // @desc    Get all delete sms (which status=failed and read=true)
 // @access  Private
-router.get("/delete", (req, res) => {
+router.get("/deleteFailedSms", (req, res) => {
   const DT = new Date()
   console.log(DT, req.method, req.originalUrl, req.query)
 
   if (!req.query.apiKey || req.query.apiKey !== apiKey2) {
     return res.status(500).json({ err: "Access Forbidden!" })
   }
+
+  Sms.updateMany(
+    {
+      status: "failed",
+    },
+    { $set: { status: "deleted" } }
+  ).then((result) => {
+    res.json({ status: true, msg: "Failed messages are being deleted.", data: result })
+  })
 
   // Sms.updateMany(
   //   {
