@@ -4,7 +4,7 @@ const smsSchema = mongoose.Schema(
   {
     app: {
       type: String,
-      enum: ["isp", "bayannopay", "kistipay", "hisabnikash"],
+      enum: ["netfee", "bayannopay", "kistipay", "hisabnikash", "utilitybill", "agrosys"],
     },
     mobile: {
       type: String,
@@ -28,7 +28,7 @@ const smsSchema = mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "sent", "failed"],
+      enum: ["pending", "sent", "failed", "deleted"],
       default: "pending",
     },
     read: {

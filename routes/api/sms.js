@@ -236,7 +236,7 @@ router.get("/sent", (req, res) => {
   }
 
   Sms.find()
-    .select("_id mobile message status feederID read type count createdAt updatedAt")
+    .select("_id mobile message status senderId app read type count createdAt updatedAt")
     .where({
       status: "sent",
       read: true,
