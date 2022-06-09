@@ -295,7 +295,7 @@ router.get("/read", (req, res) => {
 
   Sms.find()
     // .explain('executionStats')
-    .select("_id mobile message status read type feederID count createdAt updatedAt")
+    .select("_id mobile message status senderId app read type count createdAt updatedAt")
     .where({
       status: "pending",
       read: true,
@@ -324,7 +324,7 @@ router.get("/unRead", (req, res) => {
 
   Sms.find()
     // .explain('executionStats')
-    .select("_id mobile message status read count type feederID createdAt updatedAt")
+    .select("_id mobile message status senderId app read type count createdAt updatedAt")
     .where({ status: "pending", read: false })
     .then((docs) => {
       if (!docs) {
@@ -349,7 +349,7 @@ router.get("/failed", (req, res) => {
   // let modem = req.query.modem ? req.query.modem : 0
 
   Sms.find()
-    .select("_id mobile message status read type feederID count createdAt updatedAt")
+    .select("_id mobile message status senderId app read type count createdAt updatedAt")
     .where({ status: "failed" })
     .sort({ updatedAt: -1 })
     .then((docs) => {
