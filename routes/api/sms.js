@@ -178,7 +178,7 @@ router.get("/reset", (req, res) => {
 
   let modem = req.query.modem ? req.query.modem : 0
 
-  Sms.updateMany({ status: "failed", read: true }, { $set: { read: false, status: "pending" } })
+  Sms.updateMany({ read: true }, { $set: { read: false, status: "pending" } })
     .then((docs) => {
       console.log(docs.nModified)
       res.json({ status: true, data: docs })
